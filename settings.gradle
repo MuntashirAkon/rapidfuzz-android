@@ -1,0 +1,3 @@
+include ':rapidfuzz'
+rootProject.name = "RapidFuzz-Android"
+include ':app'

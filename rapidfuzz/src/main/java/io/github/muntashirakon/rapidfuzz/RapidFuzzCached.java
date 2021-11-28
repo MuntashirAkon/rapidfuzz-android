@@ -129,11 +129,12 @@ public class RapidFuzzCached implements Closeable {
         if (choices == null) return null;
         if (choices.size() == 0) return Collections.emptyList();
         List<Result<String>> results = new ArrayList<>();
-        RapidFuzzCached extractor = new RapidFuzzCached(query, ratioType);
-        for (String choice : choices) {
-            double score = extractor.ratio(choice);
-            if (score >= scoreCutoff) {
-                results.add(new Result<>(choice, score));
+        try (RapidFuzzCached extractor = new RapidFuzzCached(query, ratioType)) {
+            for (String choice : choices) {
+                double score = extractor.ratio(choice);
+                if (score >= scoreCutoff) {
+                    results.add(new Result<>(choice, score));
+                }
             }
         }
         return results;
@@ -155,11 +156,12 @@ public class RapidFuzzCached implements Closeable {
         if (choices == null) return null;
         if (choices.size() == 0) return Collections.emptyList();
         List<Result<T>> results = new ArrayList<>();
-        RapidFuzzCached extractor = new RapidFuzzCached(query, ratioType);
-        for (T choice : choices) {
-            double score = extractor.ratio(generator.getChoice(choice));
-            if (score >= scoreCutoff) {
-                results.add(new Result<>(choice, score));
+        try (RapidFuzzCached extractor = new RapidFuzzCached(query, ratioType)) {
+            for (T choice : choices) {
+                double score = extractor.ratio(generator.getChoice(choice));
+                if (score >= scoreCutoff) {
+                    results.add(new Result<>(choice, score));
+                }
             }
         }
         return results;
@@ -181,16 +183,17 @@ public class RapidFuzzCached implements Closeable {
         if (choices == null) return null;
         if (choices.size() == 0) return Collections.emptyList();
         List<Result<T>> results = new ArrayList<>();
-        RapidFuzzCached extractor = new RapidFuzzCached(query, ratioType);
-        for (T choice : choices) {
-            List<String> strings = generator.getChoices(choice);
-            double maxScore = 0;
-            for (String s : strings) {
-                double score = extractor.ratio(s);
-                if (score >= maxScore) maxScore = score;
-            }
-            if (maxScore >= scoreCutoff) {
-                results.add(new Result<>(choice, maxScore));
+        try (RapidFuzzCached extractor = new RapidFuzzCached(query, ratioType)) {
+            for (T choice : choices) {
+                List<String> strings = generator.getChoices(choice);
+                double maxScore = 0;
+                for (String s : strings) {
+                    double score = extractor.ratio(s);
+                    if (score >= maxScore) maxScore = score;
+                }
+                if (maxScore >= scoreCutoff) {
+                    results.add(new Result<>(choice, maxScore));
+                }
             }
         }
         return results;
@@ -210,14 +213,15 @@ public class RapidFuzzCached implements Closeable {
 
     public static Result<String> extractOne(String query, Collection<String> choices, int ratioType, double scoreCutoff) {
         if (choices == null || choices.size() == 0) return null;
-        RapidFuzzCached extractor = new RapidFuzzCached(query, ratioType);
         double bestScore = scoreCutoff;
         String bestChoice = null;
-        for (String choice : choices) {
-            double score = extractor.ratio(choice);
-            if (score >= bestScore) {
-                bestScore = score;
-                bestChoice = choice;
+        try (RapidFuzzCached extractor = new RapidFuzzCached(query, ratioType)) {
+            for (String choice : choices) {
+                double score = extractor.ratio(choice);
+                if (score >= bestScore) {
+                    bestScore = score;
+                    bestChoice = choice;
+                }
             }
         }
         if (bestChoice == null) return null;
@@ -238,14 +242,15 @@ public class RapidFuzzCached implements Closeable {
 
     public static <T> Result<T> extractOne(String query, Collection<T> choices, ChoiceGenerator<T> generator, int ratioType, double scoreCutoff) {
         if (choices == null || choices.size() == 0) return null;
-        RapidFuzzCached extractor = new RapidFuzzCached(query, ratioType);
         double bestScore = scoreCutoff;
         T bestChoice = null;
-        for (T choice : choices) {
-            double score = extractor.ratio(generator.getChoice(choice));
-            if (score >= bestScore) {
-                bestScore = score;
-                bestChoice = choice;
+        try (RapidFuzzCached extractor = new RapidFuzzCached(query, ratioType)) {
+            for (T choice : choices) {
+                double score = extractor.ratio(generator.getChoice(choice));
+                if (score >= bestScore) {
+                    bestScore = score;
+                    bestChoice = choice;
+                }
             }
         }
         if (bestChoice == null) return null;
@@ -266,19 +271,20 @@ public class RapidFuzzCached implements Closeable {
 
     public static <T> Result<T> extractOne(String query, Collection<T> choices, ChoicesGenerator<T> generator, int ratioType, double scoreCutoff) {
         if (choices == null || choices.size() == 0) return null;
-        RapidFuzzCached extractor = new RapidFuzzCached(query, ratioType);
         double bestScore = scoreCutoff;
         T bestChoice = null;
-        for (T choice : choices) {
-            List<String> strings = generator.getChoices(choice);
-            double maxScore = 0;
-            for (String s : strings) {
-                double score = extractor.ratio(s);
-                if (score >= maxScore) maxScore = score;
-            }
-            if (maxScore >= bestScore) {
-                bestScore = maxScore;
-                bestChoice = choice;
+        try (RapidFuzzCached extractor = new RapidFuzzCached(query, ratioType)) {
+            for (T choice : choices) {
+                List<String> strings = generator.getChoices(choice);
+                double maxScore = 0;
+                for (String s : strings) {
+                    double score = extractor.ratio(s);
+                    if (score >= maxScore) maxScore = score;
+                }
+                if (maxScore >= bestScore) {
+                    bestScore = maxScore;
+                    bestChoice = choice;
+                }
             }
         }
         if (bestChoice == null) return null;

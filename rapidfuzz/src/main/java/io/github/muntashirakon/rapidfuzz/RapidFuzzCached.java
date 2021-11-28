@@ -44,6 +44,21 @@ public class RapidFuzzCached implements Closeable {
     }
 
     /**
+     * Generates choice string when a collection of objects is provided as an argument in the {@code #extract*} methods.
+     *
+     * @param <T> The type of object the collection holds.
+     */
+    public interface ChoicesGenerator<T> {
+        /**
+         * Get choice strings from the given object. Maximum score is taken.
+         *
+         * @param object An object belonging to the collection.
+         * @return The choice strings generated in some way.
+         */
+        List<String> getChoices(T object);
+    }
+
+    /**
      * Holds the selected choice and its score analysed from a collection of objects or strings.
      *
      * @param <T> The type of object the collection holds.
@@ -150,6 +165,37 @@ public class RapidFuzzCached implements Closeable {
         return results;
     }
 
+    public static <T> List<Result<T>> extractAll(String query, Collection<T> choices, ChoicesGenerator<T> generator) {
+        return extractAll(query, choices, generator, 0.0);
+    }
+
+    public static <T> List<Result<T>> extractAll(String query, Collection<T> choices, ChoicesGenerator<T> generator, int ratioType) {
+        return extractAll(query, choices, generator, ratioType, 0.0);
+    }
+
+    public static <T> List<Result<T>> extractAll(String query, Collection<T> choices, ChoicesGenerator<T> generator, double scoreCutoff) {
+        return extractAll(query, choices, generator, TYPE_WEIGHTED_RATIO, scoreCutoff);
+    }
+
+    public static <T> List<Result<T>> extractAll(String query, Collection<T> choices, ChoicesGenerator<T> generator, int ratioType, double scoreCutoff) {
+        if (choices == null) return null;
+        if (choices.size() == 0) return Collections.emptyList();
+        List<Result<T>> results = new ArrayList<>();
+        RapidFuzzCached extractor = new RapidFuzzCached(query, ratioType);
+        for (T choice : choices) {
+            List<String> strings = generator.getChoices(choice);
+            double maxScore = 0;
+            for (String s : strings) {
+                double score = extractor.ratio(s);
+                if (score >= maxScore) maxScore = score;
+            }
+            if (maxScore >= scoreCutoff) {
+                results.add(new Result<>(choice, maxScore));
+            }
+        }
+        return results;
+    }
+
     public static Result<String> extractOne(String query, Collection<String> choices) {
         return extractOne(query, choices, 0.0);
     }
@@ -199,6 +245,39 @@ public class RapidFuzzCached implements Closeable {
             double score = extractor.ratio(generator.getChoice(choice));
             if (score >= bestScore) {
                 bestScore = score;
+                bestChoice = choice;
+            }
+        }
+        if (bestChoice == null) return null;
+        return new Result<>(bestChoice, bestScore);
+    }
+
+    public static <T> Result<T> extractOne(String query, Collection<T> choices, ChoicesGenerator<T> generator) {
+        return extractOne(query, choices, generator, 0.0);
+    }
+
+    public static <T> Result<T> extractOne(String query, Collection<T> choices, ChoicesGenerator<T> generator, int ratioType) {
+        return extractOne(query, choices, generator, ratioType, 0.0);
+    }
+
+    public static <T> Result<T> extractOne(String query, Collection<T> choices, ChoicesGenerator<T> generator, double scoreCutoff) {
+        return extractOne(query, choices, generator, TYPE_WEIGHTED_RATIO, scoreCutoff);
+    }
+
+    public static <T> Result<T> extractOne(String query, Collection<T> choices, ChoicesGenerator<T> generator, int ratioType, double scoreCutoff) {
+        if (choices == null || choices.size() == 0) return null;
+        RapidFuzzCached extractor = new RapidFuzzCached(query, ratioType);
+        double bestScore = scoreCutoff;
+        T bestChoice = null;
+        for (T choice : choices) {
+            List<String> strings = generator.getChoices(choice);
+            double maxScore = 0;
+            for (String s : strings) {
+                double score = extractor.ratio(s);
+                if (score >= maxScore) maxScore = score;
+            }
+            if (maxScore >= bestScore) {
+                bestScore = maxScore;
                 bestChoice = choice;
             }
         }

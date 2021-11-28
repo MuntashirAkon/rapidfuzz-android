@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Test RapidFuzz</string>
+    <string name="test_rapidfuzz">RapidFuzz test</string>
+    <string name="test_rapidfuzz_cached">RapidFuzzCached test</string>
 </resources>

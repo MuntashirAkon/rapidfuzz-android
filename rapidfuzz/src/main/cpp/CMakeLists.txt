@@ -45,11 +45,14 @@ set(HEADER_FILES
 )
 
 # Compile rapidfuzz
-add_library(rapidfuzz SHARED io_github_muntashirakon_rapidfuzz_RapidFuzz.cpp ${HEADER_FILES})
+add_library(rapidfuzz SHARED
+   io_github_muntashirakon_rapidfuzz_RapidFuzz.cpp
+   io_github_muntashirakon_rapidfuzz_RapidFuzzCached.cpp
+   ${HEADER_FILES})
 
 target_link_libraries(rapidfuzz ${log-lib})
 target_include_directories(rapidfuzz PUBLIC
- $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/>)
+   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/rapidfuzz-cpp/>)
 
 if (NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
     add_custom_command(TARGET rapidfuzz POST_BUILD

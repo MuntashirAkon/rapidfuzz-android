@@ -2,9 +2,28 @@
 
 package io.github.muntashirakon.rapidfuzz;
 
+/**
+ * Collection of string matching algorithms from FuzzyWuzzy. It is possible to access the algorithms individually or
+ * by generic names using the {@code RapidFuzz#TYPE_*} constants with {@link #ratio(String, String, int, double)}
+ * or {@link #ratio(String, String, int)}.
+ */
 public class RapidFuzz {
+    public static final int TYPE_RATIO = 1;
+    public static final int TYPE_PARTIAL_RATIO = 2;
+    public static final int TYPE_TOKEN_SORT_RATIO = 3;
+    public static final int TYPE_PARTIAL_TOKEN_SORT_RATIO = 4;
+    public static final int TYPE_TOKEN_SET_RATIO = 5;
+    public static final int TYPE_PARTIAL_TOKEN_SET_RATIO = 6;
+    public static final int TYPE_TOKEN_RATIO = 7;
+    public static final int TYPE_PARTIAL_TOKEN_RATIO = 8;
+    public static final int TYPE_WEIGHTED_RATIO = 9;
+    public static final int TYPE_QUICK_RATIO = 10;
+
     static {
         System.loadLibrary("rapidfuzz");
+    }
+
+    private RapidFuzz() {
     }
 
     /**
@@ -15,7 +34,7 @@ public class RapidFuzz {
      * @return The ratio between s1 and s2 or 0 when ratio < 0.
      */
     public static double ratio(String s1, String s2) {
-        return ratio(s1, s2, 0);
+        return ratio(s1, s2, 0.0);
     }
 
     /**
@@ -271,6 +290,56 @@ public class RapidFuzz {
      */
     public static double quickRatio(String s1, String s2, double scoreCutoff) {
         return nativeQuickRatio(s1, s2, scoreCutoff);
+    }
+
+    /**
+     * Same as {@link #ratio(String, String, int, double)}  except that the score threshold is set to 0.0.
+     *
+     * @param s1        String to compare with s2
+     * @param s2        String to compare with s1
+     * @param ratioType Ratio type. One of the {@code RapidFuzz#TYPE_*} constants.
+     * @return The ratio between s1 and s2 or 0 when ratio < score_cutoff.
+     */
+    public static double ratio(String s1, String s2, int ratioType) {
+        return ratio(s1, s2, ratioType, 0);
+    }
+
+    /**
+     * Calculate ratio based on ratio type. This is a more generalised method than the others.
+     *
+     * @param s1          String to compare with s2
+     * @param s2          String to compare with s1
+     * @param ratioType   Ratio type. One of the {@code RapidFuzz#TYPE_*} constants.
+     * @param scoreCutoff A score threshold between 0% and 100%. Matches with a lower score than this number will not be
+     *                    returned.
+     * @return The ratio between s1 and s2 or 0 when ratio < score_cutoff.
+     * @throws IllegalArgumentException If the ratio type is invalid.
+     */
+    public static double ratio(String s1, String s2, int ratioType, double scoreCutoff) {
+        switch (ratioType) {
+            case TYPE_RATIO:
+                return ratio(s1, s2, scoreCutoff);
+            case TYPE_PARTIAL_RATIO:
+                return partialRatio(s1, s2, scoreCutoff);
+            case TYPE_TOKEN_SORT_RATIO:
+                return tokenSortRatio(s1, s2, scoreCutoff);
+            case TYPE_PARTIAL_TOKEN_SORT_RATIO:
+                return partialTokenSortRatio(s1, s2, scoreCutoff);
+            case TYPE_TOKEN_SET_RATIO:
+                return tokenSetRatio(s1, s2, scoreCutoff);
+            case TYPE_PARTIAL_TOKEN_SET_RATIO:
+                return partialTokenSetRatio(s1, s2, scoreCutoff);
+            case TYPE_TOKEN_RATIO:
+                return tokenRatio(s1, s2, scoreCutoff);
+            case TYPE_PARTIAL_TOKEN_RATIO:
+                return partialTokenRatio(s1, s2, scoreCutoff);
+            case TYPE_WEIGHTED_RATIO:
+                return weightedRatio(s1, s2, scoreCutoff);
+            case TYPE_QUICK_RATIO:
+                return quickRatio(s1, s2, scoreCutoff);
+            default:
+                throw new IllegalArgumentException("Unknown ratio type " + ratioType);
+        }
     }
 
     // Native calls
